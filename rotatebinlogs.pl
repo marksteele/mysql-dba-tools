@@ -4,26 +4,27 @@ use Data::Dumper;
 use IO::Compress::Gzip qw(gzip $GzipError :constants);
 use POSIX qw(nice uname);
 use Getopt::Long;
+use File::Basename;
 use strict;
 
+my $me = basename($0);
 
-
-if (-e '/var/run/rotatebinarylogs.pid') {
-  open(F,'/var/run/rotatebinarylogs.pid') or die ("can't open pidfile: $!");
+if (-e "/var/run/$me.pid") {
+  open(F,"/var/run/$me.pid") or die ("can't open $me.pid: $!");
   my $pid = <F>;
   close(F);
   if (-e "/proc/$pid/cmdline") {
     open(F,"/proc/$pid/cmdline") or die ("can't open /proc/$pid/cmdline: $!");
     my $cmd = <F>;
     close(F);
-    if ($cmd =~ /rotatebinlog/) {
+    if ($cmd =~ /$me/) {
       warn("Already running");
       exit;
     }
   }
 }
 
-open(F,">/var/run/rotatebinarylogs.pid") or die ("can't open pidfile: $!");
+open(F,">/var/run/$me.pid") or die ("can't open $me.pid: $!");
 print F $$;
 close(F);
 
@@ -62,7 +63,7 @@ if ($help) {
 }
 sub usage {
   print <<"EOF";
-Usage: $0 <options>
+Usage: $me <options>
 
 Options:
   --user=<username> 
@@ -167,4 +168,6 @@ if ($purge) {
     }
   }
 }
-unlink('/var/run/rotatebinarylogs.pid');
+unlink("/var/run/$me.pid");
+
+
