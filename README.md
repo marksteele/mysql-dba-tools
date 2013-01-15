@@ -6,11 +6,11 @@ Tools to help manage mysql DBs
 
 ==============
 
-rotatebinlogs.pl: Allows the compression and rotate of binary logs, checking to make sure expected number of slaves are synched before doing anything.
+rotatebinlogs.pl: Allows the compression and rotate of binary logs, checking to make sure expected number of slaves are synched before doing anything. This can be especially useful on high-churn sites that produce lots of binary logs in relatively short periods of time.
 
 Sample usage:
 
-  root@dbserver1# ./rotatelogs.pl --purge --hostname=dbserver1 \
+  root@dbserver1# ./rotatelogs.pl --purge \
   --numslaves=2 --host=localhost --user=root --pass=mypass \
   --datadir=/var/lib/mysql --priority=10 --keep=4
 
@@ -32,9 +32,6 @@ Options:
 
   --datadir=[path to binlogs]
     The file path to the binlog files
-
-  --hostname=[the name of this host]
-    The hostname string mysql thinks this hostname is at. Examine the binary log names to find this.
 
   --numslaves=[number of slaves this master has]
     The number of slaves this master has.
