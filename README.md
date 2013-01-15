@@ -10,9 +10,9 @@ rotatebinlogs.pl: Allows the compression and rotate of binary logs, checking to 
 
 Sample usage:
 
-root@dbserver1# ./rotatelogs.pl --purge --hostname=dbserver1 \
---numslaves=2 --host=localhost --user=root --pass=mypass \
---datadir=/var/lib/mysql --priority=10 --keep=4
+  root@dbserver1# ./rotatelogs.pl --purge --hostname=dbserver1 \
+  --numslaves=2 --host=localhost --user=root --pass=mypass \
+  --datadir=/var/lib/mysql --priority=10 --keep=4
 
 
 Usage: ./rotatebinlogs.pl <options>
