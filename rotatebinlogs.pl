@@ -32,7 +32,7 @@ my $user = 'root';
 my $pass = '';
 my $host = 'localhost';
 my $datadir = '/var/lib/mysql';
-my $hostname = (uname())[1];
+my $prefix = '';
 my $numslaves = 0;
 my $priority = 19;
 my $port = 3306;
@@ -51,10 +51,11 @@ my $result = GetOptions(
   "help" => \$help,
   "purge" => \$purge,
   "keep=i" => \$keep,
+  "prefix=s" => \$prefix,
 );
 
-if (!$numslaves || !$keep || $keep < 1) {
-  print "Error: You must specify the number of slaves this master has, and the number of days worth of logs you wish to keep\n\n";
+if (!$numslaves || !$keep || $keep < 1 || !$prefix) {
+  print "Error: You must specify the number of slaves this master has, and the number of days worth of logs you wish to keep\nYou also need to specify the binary log file name prefix (eg: mysqld if your binary logs are /usr/lib/mysql/mysqld-bin.XXXXX)\n";
   usage();
 }
 
@@ -101,6 +102,10 @@ Options:
   --keep=<days>
  
   The number of days worth of compressed logs to keep around
+
+  --prefix=<prefix>
+
+  The binary log file name prefix (eg: mysqld if your logs are /usr/lib/mysql/mysqld-bin.XXXXXX)
 
 EOF
   exit;
@@ -156,7 +161,7 @@ for (my $retries = 0; $retries < 10; $retries++) {
 if ($purge) {
   my $keeptime = time() - (86400*$keep);
   opendir(D,$datadir) || die ("couldn't open data dir: $!");
-  my @files = map { $_->[0] } sort { $a->[1] <=> $b->[1] } map { [$_, /\.(\d+)$/] } grep {/^$hostname-bin\.\d+\.gz$/} readdir(D);
+  my @files = map { $_->[0] } sort { $a->[1] <=> $b->[1] } map { [$_, /\.(\d+)$/] } grep {/^$prefix-bin\.\d+\.gz$/} readdir(D);
   closedir(D);
   foreach my $file (@files) {
     my $mtime = (stat("$datadir/$file"))[9];
