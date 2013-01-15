@@ -18,42 +18,32 @@ root@dbserver1# ./rotatelogs.pl --purge --hostname=dbserver1 \
 Usage: ./rotatebinlogs.pl <options>
 
 Options:
-  --user=<username> 
-
+  --user=[username]
     The username to use when connecting to the DB server
 
-  --pass=<password>
-
+  --pass=[password]
     The password to use when connecting to the DB server
 
-  --host=<host to connect to>
-
+  --host=[host to connect to]
     The hostname to connect to
 
-  --port=<mysql port>
-
+  --port=[mysql port]
     The port to use to connect to the DB
 
-  --datadir=<path to binlogs>
-
+  --datadir=[path to binlogs]
     The file path to the binlog files
 
-  --hostname=<the name of this host>
-
+  --hostname=[the name of this host]
     The hostname string mysql thinks this hostname is at. Examine the binary log names to find this.
 
-  --numslaves=<number of slaves this master has>
-
+  --numslaves=[number of slaves this master has]
     The number of slaves this master has.
 
-  --priority=<process niceness>
-
+  --priority=[process niceness]
     The scheduling priority to use.  1-20 makes it schedule less often meaning it's nicer, -1 to -20 makes it schedule more often, meaning it will use resources more aggresively. Defaults to 19.
 
-  --purge
-    
-    Purge the master logs when done. Be mindful of using this if you're not running this script often.
+  --purge  
+    Purge the master logs and remove old archives.
 
-  --keep=<days>
- 
+  --keep=[days]
     The number of days worth of compressed logs to keep around
