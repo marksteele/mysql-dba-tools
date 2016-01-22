@@ -114,7 +114,7 @@ EOF
 ## Lower process priority to have a bit less impact on running system.
 nice($priority);
 
-my $dbh = DBI->connect("DBI:mysql:database=mysql;host=$host;port=$port", $user, $pass) || die("Couldn't connect: $!");
+my $dbh = DBI->connect("DBI:mysql:database=mysql;host=$host;port=$port;mysql_read_default_file=$ENV{HOME}/.my.cnf", $user, $pass) || die("Couldn't connect: $!");
 
 print "Grabbing master status\n";
 my $status = $dbh->selectrow_hashref("SHOW MASTER STATUS");
