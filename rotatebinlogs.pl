@@ -161,7 +161,7 @@ for (my $retries = 0; $retries < 10; $retries++) {
 if ($purge) {
   my $keeptime = time() - (86400*$keep);
   opendir(D,$datadir) || die ("couldn't open data dir: $!");
-  my @files = map { $_->[0] } sort { $a->[1] <=> $b->[1] } map { [$_, /\.(\d+)\.gz$/] } grep {/^$prefix-bin\.\d+\.gz$/} readdir(D);
+  my @files = map { $_->[0] } sort { $a->[1] <=> $b->[1] } map { [$_, /\.(\d+)\.gz$/] } grep {/^$prefix\.\d+\.gz$/} readdir(D);
   closedir(D);
   foreach my $file (@files) {
     my $mtime = (stat("$datadir/$file"))[9];
