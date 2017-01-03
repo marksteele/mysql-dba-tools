@@ -3,9 +3,12 @@ use DBD::mysql;
 use Data::Dumper;
 use IO::Compress::Gzip qw(gzip $GzipError :constants);
 use POSIX qw(nice uname);
+use POSIX 'strftime';
 use Getopt::Long;
 use File::Basename;
+use Filesys::Df;
 use strict;
+
 
 my $me = basename($0);
 
@@ -38,7 +41,10 @@ my $priority = 19;
 my $port = 3306;
 my $help;
 my $purge;
+my $purge_free_space_threshold = 200; #in MB
 my $keep;
+my $uncompressed_keep = 24;
+my $uncompressed_free_space_threshold = 100; #in MB
 
 my $result = GetOptions(
   "user=s" => \$user,
@@ -50,7 +56,10 @@ my $result = GetOptions(
   "port=i" => \$port,
   "help" => \$help,
   "purge" => \$purge,
+  "purge_free_space_threshold=f" => \$purge_free_space_threshold,
   "keep=i" => \$keep,
+  "uncompressed_keep=f" => \$uncompressed_keep,
+  "uncompressed_free_space_threshold=f" => \$uncompressed_free_space_threshold,
   "prefix=s" => \$prefix,
 );
 
@@ -99,13 +108,26 @@ Options:
     
     Purge the master logs when done. Be mindful of using this if you're not running this script often.
 
+  --purge_free_space_threshold=<total_space_in_MB>
+
+    It purges the archived logs when there is less then specified disk space avaiable. It's enabled only when --purge option is specified. The default is 200MB.
+
   --keep=<days>
  
-  The number of days worth of compressed logs to keep around
+    The number of days worth of compressed logs to keep around. The archived logs can be purged when there is not enough space available. See --purge_free_space_threshold.
+
+  --uncompressed_keep=<hours>
+
+    The number of hours worth of UNcompressed logs to keep around. The logs are purged only when the available space on filesystem is less then
+    --uncompressed_free_space_threshold=<total_space_in_MB>. The default value is 24 hour.
+
+  --uncompressed_free_space_threshold=<total_space_in_MB>
+
+    See --uncompressed_keep=<hours>. The default is 100MB.
 
   --prefix=<prefix>
 
-  The binary log file name prefix (eg: mysqld if your logs are /usr/lib/mysql/mysqld-bin.XXXXXX)
+    The binary log file name prefix (eg: mysqld if your logs are /usr/lib/mysql/mysqld-bin.XXXXXX)
 
 EOF
   exit;
@@ -165,14 +187,32 @@ if ($purge) {
   closedir(D);
   foreach my $file (@files) {
     my $mtime = (stat("$datadir/$file"))[9];
+    my $datadir_df = df($datadir, 1024*1024); # in MB
     if ($mtime < $keeptime) {
       print "Removing archive $datadir/$file $mtime < $keeptime\n";
+      unlink("$datadir/$file") || die ("Could not delete $datadir/$file");
+    } elsif (defined($datadir_df) && ($datadir_df->{bavail} <= $purge_free_space_threshold)) {
+      print "Removing archive $datadir/$file because there is less then ${purge_free_space_threshold}MB available\n";
       unlink("$datadir/$file") || die ("Could not delete $datadir/$file");
     } else {
       print "Keeping $datadir/$file\n";
     }
   }
 }
+
+# remove uncompressed binlogs when too less space is available
+my $datadir_df = df($datadir, 1024*1024); # in MB
+if(defined($datadir_df)) {
+  if($datadir_df->{bavail} <= $uncompressed_free_space_threshold) {
+    my $now = time();
+    my $purge_time = $now - ($uncompressed_keep*3600);
+    my $purge_time_formatted = POSIX::strftime( '%Y-%m-%d %T', localtime($purge_time) );
+    print "Purging uncompressed binlogs older than ${uncompressed_keep} hours (before ${purge_time_formatted}) because there is less then ${uncompressed_free_space_threshold}MB available\n";
+    $dbh->do("PURGE BINARY LOGS BEFORE ?",undef,$purge_time_formatted);
+  }
+}
+
+
 unlink("/var/run/$me.pid");
 
 
